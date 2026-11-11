@@ -7,7 +7,7 @@
 \usepackage{xeCJK}
 \IfFontExistsTF{Times New Roman}{\setmainfont{Times New Roman}}{\setmainfont{TeX Gyre Termes}}
 \IfFontExistsTF{Microsoft JhengHei}{\setCJKmainfont{Microsoft JhengHei}}{\setCJKmainfont{Noto Sans CJK TC}}
-\usepackage{graphicx,booktabs,amsmath,amssymb}
+\usepackage{graphicx,booktabs,amsmath,amssymb,array}
 \graphicspath{{../figures/}}
 \title{Phishing Website Anomaly Detection:\\Reconstruction Scores, Feature Selection, and Operational Trade-offs}
 \author{Team ID: [G01] \\
@@ -21,7 +21,7 @@ Phishing alerts must protect users without overwhelming analysts. On 11,055 tabu
 \section{Introduction}
 We study \textbf{Tabular} phishing detection with 30 categorical indicators, without URLs/HTML. A feature-wise softmax AE models code combinations without numeric-distance assumptions. Legitimate \texttt{train\_00000} has (SSL, anchor)=$(1,1)$; phishing \texttt{train\_00002} has $(-1,-1)$: coded examples, not live inspections.
 
-Security analysts inspect alerts and issue browser warnings before blocking. FPs consume review capacity and disrupt legitimate visits; FNs leave credential theft undetected.
+Security analysts review alerts, warn users, and block confirmed threats. FPs waste review capacity/disrupt visits; FNs expose users to credential theft.
 
 \textbf{Research question:} Can normal-only reconstruction detect phishing while preserving performance with nine features and controlling false-alarm workload?
 
@@ -36,11 +36,11 @@ Our contributions are:
 \section{Related Work}
 Our category is \textbf{Tabular}; the following studies differ in data, method, supervision, and outcomes.
 
-\citet{hannousse2021}: 87 URL/content/service features; supervised Random Forest; accuracy 96.61\% hybrid and 96.83\% after selection. We test normal-only fitting and redundancy on 30 codes.
+\citet{hannousse2021}: 87 URL/content/service features, supervised Random Forest, accuracy 96.61\% hybrid/96.83\% after selection. We instead test normal-only fitting and redundancy on 30 tabular codes.
 
-\citet{bu2021}: 222,541 URLs across three corpora; character-level convolutional AE plus auxiliary supervised CNN; abstract-reported sensitivity improvement 3.98\%. We reconstruct tabular codes with additive explanations.
+\citet{bu2021}: 222,541 URLs, three corpora, character-level convolutional AE plus supervised auxiliary CNN; reported sensitivity gain 3.98\%. We reconstruct tabular codes with additive explanations.
 
-\citet{sahingoz2019}: 73,575 URLs; supervised Random Forest/NLP; accuracy 97.98\%. We contrast supervision and alert costs. Cross-dataset results are contextual, not direct comparisons.
+\citet{sahingoz2019}: 73,575 URLs, supervised Random Forest/NLP, accuracy 97.98\%. We compare supervision and alert costs; cross-dataset scores are contextual.
 
 Tier assumptions: $-1$ counts reflect risk (Tier 1 floor); normal combinations reconstruct well or anomalies isolate easily (Tier 2 AE/Isolation Forest; \citet{liu2008}); labeled phishing generalizes (Tier 3 XGBoost; \citet{chen2016}).
 \section{Task Definition \& Data}
@@ -62,9 +62,9 @@ The 70/15/15 split retains 5,206 extra duplicate labeled rows, 5,270 extra featu
 \section{Exploratory Feature Analysis}
 \textbf{Mutual Information Ranking.} Higher MI indicates more information about legitimate versus phishing labels. We compute MI in nats on 7,738 training records only; this label-assisted selection is separate from normal-only AE fitting. Figure~\ref{fig:training}(a) ranks all features. The Top-9 are SSLfinal\_State, URL\_of\_Anchor, Prefix\_Suffix, web\_traffic, having\_Sub\_Domain, Links\_in\_tags, Request\_URL, SFH, and Domain\_registeration\_length.
 
-Nine is exploratory: MI drops from .02461 (rank 9) to .00717 (rank 10), about 3.43-fold. This motivates a 70\% feature reduction with Top-5/15 controls, not a uniquely optimal cutoff or proof that lower-MI features are useless.
+The exploratory cutoff follows MI's 3.43-fold drop from rank 9 (.02461) to 10 (.00717), motivating 70\% feature reduction with Top-5/15 controls. It is not uniquely optimal; lower-MI features may remain useful.
 
-\textbf{Normal versus phishing.} Figure~\ref{fig:training}(c) shows that SSL code $1$ is 89.12\% legitimate, whereas code $-1$ is 85.74\% phishing. In Figure~\ref{fig:training}(d), anchor code $-1$ is 99.00\% phishing, while code $1$ is 94.15\% legitimate. These are within-code class shares; overlap means neither indicator is a deterministic label.
+\textbf{Normal versus phishing.} Figure~\ref{fig:training}(c): SSL code $1$ is 89.12\% legitimate; $-1$ is 85.74\% phishing. In (d), anchor code $-1$ is 99.00\% phishing; $1$ is 94.15\% legitimate. These within-code class shares show overlap; neither feature determines the label.
 
 \textbf{Feature Association.} Higher Cramer's V in Figure~\ref{fig:training}(b) suggests overlapping information. We use training-only Pearson counts, $V=\sqrt{\chi^2/[n\min(r-1,c-1)]}$, without Yates correction. The exploratory cutoff $V\geq.80$ was not preregistered.
 
@@ -76,7 +76,7 @@ Top 9 & 36 & 1 & 0 & .606\\\bottomrule
 \end{tabular}
 \caption{Training-only pairwise redundancy sensitivity ($n=7,738$); diagonal and mirrored pairs are excluded.}\label{tab:v}
 \end{table}
-All four pairs with $V\geq.80$ are Favicon/popUpWidnow (.9394), Shortining\_Service/double\_slash\_redirecting (.8405), Favicon/port (.8027), and port/Submitting\_to\_email (.8008). Top-9's strongest pair is registration length/Request\_URL (.6057); it exceeds both .50 and .60. Thus, ``no high redundancy'' depends on the cutoff, and pairwise V cannot establish conditional complementarity.
+Four pairs reach $V\geq.80$: Favicon/popUpWidnow (.9394), URL shortener/double-slash redirect (.8405), Favicon/port (.8027), and port/email submission (.8008); Figure~\ref{fig:training}(b) gives feature codes. Top-9's maximum, registration length/Request\_URL (.6057), exceeds .50/.60. Redundancy is cutoff-dependent; pairwise V cannot establish conditional complementarity.
 
 \textbf{H1:} Selecting the top 9 features based on Mutual Information can achieve comparable anomaly detection performance to using all 30 features.
 
@@ -99,7 +99,7 @@ All four pairs with $V\geq.80$ are Favicon/popUpWidnow (.9394), Shortining\_Serv
 \end{figure*}
 \section{Method}
 \subsection{Categorical reconstruction}
-Fixed three-position one-hot codes yield 90 inputs without globally fitted vocabularies/scalers. The AE is $90\rightarrow128\rightarrow64\rightarrow8\rightarrow64\rightarrow128\rightarrow90$, with three-way feature softmaxes (Figure~\ref{fig:pipeline}); categorical CE fits 4,310 legitimate training records only.
+Three-position one-hot encoding gives 90 inputs without fitted vocabularies/scalers. The AE is $90\rightarrow128\rightarrow64\rightarrow8\rightarrow64\rightarrow128\rightarrow90$, with feature-wise softmaxes (Figure~\ref{fig:pipeline}); categorical CE fits only 4,310 legitimate training records.
 
 \begin{equation}
 \begin{aligned}
@@ -125,9 +125,9 @@ All methods share partitions and seeds 0--4; seeds alter models, not data. Label
 
 Validation grids cover AE hidden layers $(64,32)/(128,64)$ and latent widths $\{2,4,8,16\}$; IF trees $\{100,300\}$, samples $\{256,1024\}$, feature fractions $\{.5,1\}$; XGBoost trees $\{200,500\}$, depths $\{3,6,9\}$, rates $\{.05,.1\}$. We use PyTorch 2.7.1, scikit-learn 1.6.1, XGBoost 3.0.1, and SciPy 1.15.2 on an AMD Ryzen 5 5600H CPU, no GPU.
 
-Metrics are AP (average precision, not trapezoidal PR-AUC), ROC-AUC, F1, recall, and $FPR=FP/(FP+TN)$. Five-seed means/SDs, paired seed-wise $t$-tests and 2,000 paired site bootstraps of seed-averaged scores quantify comparisons.
+Metrics: AP (average precision, not trapezoidal PR-AUC), ROC-AUC, F1, recall, and $FPR=FP/(FP+TN)$. We report five-seed means/SDs, paired seed-wise $t$-tests, and 2,000 paired site bootstraps of seed-averaged scores.
 
-\textbf{Overlap limitation:} 987/1,659 test rows share training vectors (829 distinct vectors); 672 are unseen. The split is not group-disjoint. Unseen results are sensitivity checks, not leakage-free generalization; site bootstrap intervals ignore vector-cluster dependence.
+\textbf{Overlap limitation:} 987/1,659 test rows share training vectors (829 distinct); 672 are unseen. The split is not group-disjoint; unseen-vector results are sensitivity checks. Site bootstraps ignore vector-cluster dependence, limiting generalization claims.
 \section{Results}
 \subsection{Main comparison}
 AE exceeds heuristic/IF but trails supervised XGBoost (Table~\ref{tab:main}; Figure~\ref{fig:pr}). Versus IF, AP gap is $+.2919$ (95\% bootstrap CI $[.2583,.3232]$, paired $p=1.03\times10^{-6}$); versus XGBoost, $-.0498$ ($[-.0592,-.0401]$, $p=1.78\times10^{-6}$). Gaps use AP of seed-averaged scores; Table~\ref{tab:main} averages per-seed AP. Nonlinearity explains its different differences ($+.283/-.058$).
@@ -179,7 +179,7 @@ At $\tau=6.696$ nats, seed 0 yields 126 FNs/92 FPs on 1,659 test sites (TP=609, 
 \begin{table}[h]\centering\small\fontsize{10}{11.5}\selectfont
 \setlength{\tabcolsep}{2pt}
 \renewcommand{\arraystretch}{1.08}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}p{.44\columnwidth}rr@{}}\toprule
+\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}>{\raggedright\arraybackslash}p{.44\columnwidth}rr@{}}\toprule
 Property & FN ($n=126$) & FP ($n=92$)\\\midrule
 Near miss (within $2\times$) & 46 (37\%) & 61 (66\%)\\
 Complete inversion ($\geq10\times$) & 39 (31\%) & 0 (0\%)\\

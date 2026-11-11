@@ -16,7 +16,7 @@ GitHub repository: \url{https://github.com/v1852465cs15/HW2-Anomaly-Detection}}
 \begin{document}
 \maketitle
 \begin{abstract}
-Phishing alerts must detect malicious sites without overwhelming analysts. On 11,055 tabular website records, our normal-only categorical AE achieves AP .940 across five seeds, exceeding heuristic/Isolation Forest baselines but trailing supervised XGBoost (.998). Top-9 MI features retain close performance; pairwise redundancy conclusions depend on the cutoff. Training contamination of 10\% reduces AP from .939 to .709. Score decomposition explains alerts, while six failure cases expose legitimate-like phishing and rare benign profiles. At 1\% prevalence, FPR-constrained thresholds reduce projected false alarms from 701 to 99 per 10,000 scans, sacrificing recall. Duplicate vectors and untested distribution shift limit deployment claims.
+Phishing alerts must protect users without overwhelming analysts. On 11,055 tabular records, a normal-only categorical AE achieves five-seed AP .940, exceeding heuristic/Isolation Forest baselines but trailing supervised XGBoost (.998). Top-9 MI features retain close performance; redundancy conclusions depend on the cutoff. Training contamination of 10\% reduces AP from .939 to .709. Additive explanations and six failure cases expose legitimate-like phishing and rare benign profiles. At 1\% prevalence, FPR constraints reduce projected false alarms from 701 to 99 per 10,000 scans at lower recall. Duplicate vectors and untested distribution shift limit deployment claims.
 \end{abstract}
 \section{Introduction}
 We study \textbf{Tabular} phishing detection with 30 categorical indicators, without URLs/HTML. A feature-wise softmax AE models code combinations without numeric-distance assumptions. Legitimate \texttt{train\_00000} has (SSL, anchor)=$(1,1)$; phishing \texttt{train\_00002} has $(-1,-1)$: coded examples, not live inspections.
@@ -57,7 +57,7 @@ Test & 1,659 & 924 & 735\\\bottomrule
 \end{tabular}
 \caption{Our stratified split; one-class models fit the legitimate training subset only.}\label{tab:data}
 \end{table}
-The 70/15/15 split retains 5,206 extra duplicate labeled rows, 5,270 extra feature vectors, and 64 conflicting-label vector groups: representation ambiguity or possible annotation noise, not proven label errors. No features are missing/constant. URL, HTML, form, and reputation codes are categorical; zero is not missingness.
+The 70/15/15 split retains 5,206 extra duplicate labeled rows, 5,270 extra feature vectors, and 64 conflicting-label groups, suggesting representation ambiguity or annotation noise. No features are missing/constant. URL, HTML, form, and reputation indicators are categorical; zero is not missingness.
 
 \section{Exploratory Feature Analysis}
 \textbf{Mutual Information Ranking.} Higher MI indicates more information about legitimate versus phishing labels. We compute MI in nats on 7,738 training records only; this label-assisted selection is separate from normal-only AE fitting. Figure~\ref{fig:training}(a) ranks all features. The Top-9 are SSLfinal\_State, URL\_of\_Anchor, Prefix\_Suffix, web\_traffic, having\_Sub\_Domain, Links\_in\_tags, Request\_URL, SFH, and Domain\_registeration\_length.
@@ -151,9 +151,9 @@ Tier & Method & AP & ROC-AUC & F1 & FPR $\downarrow$ & AP unseen & Train s / ms 
 Unseen-vector AP is .943 (AE) versus .998 (XGBoost), with prevalence .567 rather than .443; overlap is not thereby harmless. Figure~\ref{fig:scores} shows below-threshold phishing. AE takes 8.41 s to train and .002 ms/site in batch, excluding feature extraction: stronger ranking than IF at higher training cost, but weaker than supervised XGBoost.
 
 \subsection{Controlled ablations}\label{sec:ablation}
-Ablations change one factor while holding split, seeds and validation-F1 rule fixed. Baseline AP/F1 .939/.851 differs from main-run .940/.856 by .001/.005, within one main seed SD (.003/.009); run sets remain separate, without assuming identical conditions.
+Ablations hold split, seeds and validation-F1 selection fixed. Their baseline AP/F1 .939/.851 differs from main-run .940/.856 by .001/.005, within one seed SD (.003/.009); separate run sets do not imply identical conditions.
 
-Top-9 reaches AP $.933\pm.010$, gap $-.0063$ ($p=.242$), F1 .854. H1 has descriptive support, not preregistered equivalence evidence. Top-15 AP .951 shows nine is not proven optimal (Table~\ref{tab:abl}).
+Top-9 AP is $.933\pm.010$ (gap $-.0063$, $p=.242$), F1 .854: descriptive H1 support, not preregistered equivalence. Top-15 AP .951 means nine is not proven optimal (Table~\ref{tab:abl}).
 \begin{table}[t]\centering\small
 \begin{tabular}{lrrr}\toprule
 Configuration & AP $\pm$ SD & F1 & $p$ vs. full\\\midrule
@@ -168,15 +168,15 @@ MSE scoring & .914$\pm$.003 & .835 & .000504\\\bottomrule
 \end{tabular}
 \caption{Our controlled ablations across five seeds. Uncorrected paired $t$-test $p$ values; Bonferroni criterion $\alpha=.05/7\approx.00714$ for seven comparisons.}\label{tab:abl}
 \end{table}
-H2 is partially supported: zero Top-9 pairs at $V\geq.80$, one at $.50$ (Table~\ref{tab:v}). Close AP supports useful combined information, not conditional complementarity or minimality; targeted leave-one-feature-out tests remain necessary.
+H2 has partial support: zero Top-9 pairs at $V\geq.80$, one at $.50$ (Table~\ref{tab:v}). Close AP supports useful combined information, not conditional complementarity/minimality; leave-one-feature-out tests remain necessary.
 
-At fixed $n=4,310$, 1/5/10\% contamination reduces AP to .865/.779/.709; 10\% raises FPR from 7.5\% to 48.1\%. CE training with MSE scoring gives AP .914 and FPR 14.0\%. These effects survive Bonferroni ($\alpha=.05/7\approx.00714$); Top-15 ($p=.0216$) does not. Clean normal data and categorical scoring matter most.
+With $n=4,310$, 1/5/10\% contamination lowers AP to .865/.779/.709; 10\% raises FPR from 7.5\% to 48.1\%. CE training/MSE scoring gives AP .914, FPR 14.0\%. These effects survive Bonferroni ($\alpha=.05/7\approx.00714$), unlike Top-15 ($p=.0216$). Clean data and categorical scoring matter most.
 
 \section{Analysis}
 \subsection{Error Analysis}
 At $\tau=6.696$ nats, seed 0 yields 126 FNs/92 FPs on 1,659 test sites (TP=609, TN=832; Table~\ref{tab:breakdown}). Near misses satisfy $.5\leq s/\tau\leq2$; inversions are at least tenfold off. Hamming distance uses the nearest legitimate training site. Conflicts suggest label noise or lossy representation; static codes have no sensor noise.
 
-\begin{table}[h]\centering\small
+\begin{table}[h]\centering\small\fontsize{10}{11.5}\selectfont
 \setlength{\tabcolsep}{2pt}
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}p{.44\columnwidth}rr@{}}\toprule
@@ -206,7 +206,7 @@ Table~\ref{tab:errors} selects the lowest-score conflicting FN, lowest-score sys
 \multicolumn{3}{l}{Legitimate training mode} & +1 & 0 & +1 & 0 & & & \\
 \multicolumn{3}{l}{Phishing training mode} & -1 & -1 & 0 & -1 & & & \\\bottomrule
 \end{tabular}
-\caption{Six failure cases; $\tau=6.696$ nats. A=URL\_of\_Anchor, T=web\_traffic, L=Links\_in\_tags, SSL=SSLfinal\_State. Scores/ratios are reported rounded values; case 6 lies just above the unrounded $2\times$ boundary. Encoded signs have feature-specific meanings.}\label{tab:errors}
+\caption{Six cases, $\tau=6.696$ nats. A=URL\_of\_Anchor; T=web\_traffic; L=Links\_in\_tags; SSL=SSLfinal\_State. Scores/ratios are rounded; case 6 is just above $2\times$. Signs have feature-specific meanings.}\label{tab:errors}
 \end{table*}
 
 \paragraph{Case notes.} (1) Training vector: five legitimate/four phishing; all $s_j\approx0$, XGBoost $P=.50$. (2) Legitimate-like codes; all $s_j\approx0$, $P=.03$. (3) SSL $-1$ contributes 3.60 nats; score is .38 below $\tau$, $P=.73$. (4) Benign deviations add up: Traffic $0$ (1.92), on\_mouseover $-1$ (1.80), Abnormal\_URL $-1$ (1.21). (5) Rare legitimate SSL $-1$ contributes 20.2 (46\%); contextual mismatch does not establish temporal drift. (6) Vector occurs twice as legitimate in training; SFH $+1$ contributes 8.6 (63\%), and all five seeds flag it. Feature terms sum to the total score.
@@ -241,7 +241,7 @@ If restarting, we would first freeze a vector-group-disjoint split, audit label 
 Missing URLs/HTML/timestamps, conflicting labels, cross-split overlap, and site-bootstrap dependence limit generalization. The 44.3\% prevalence differs from deployment; future distributions remain untested. AE needs clean, representative normal data and drift monitoring/recalibration/retraining. Batch .002 ms/site excludes feature extraction and end-to-end delays. Deployment requires privacy-conscious processing and human review.
 
 \section*{Contributions of Each Member}
-\begingroup\small
+\begingroup\small\fontsize{10}{11.5}\selectfont
 \setlength{\parskip}{0pt}
 \interlinepenalty=10000
 \noindent\textbf{1 [515559007馮昱祥]:} Cleaned dataset, feature definitions (\S3, Table 1); ACL formatting and GitHub upload.\par

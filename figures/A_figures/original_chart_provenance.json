@@ -1,0 +1,14 @@
+{
+  "MI_Ranking.png": {
+    "source_document": "handover.docx",
+    "archive_member": "word/media/image1.png",
+    "sha256": "4312090c56a694f585d527a4068be38909dc619fb804cedb3a83011530b44ed4",
+    "byte_identical": true
+  },
+  "Feature_Association.png": {
+    "source_document": "handover.docx",
+    "archive_member": "word/media/image2.png",
+    "sha256": "73da2b432c6a634afde85083f5cb00d4e48423a218e37b740149cbf78bd9029c",
+    "byte_identical": true
+  }
+}

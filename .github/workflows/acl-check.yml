@@ -1,0 +1,47 @@
+name: Compile ACL report
+on:
+  push:
+    branches: [codex/acl-six-page]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XeLaTeX and fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq texlive-xetex texlive-lang-chinese texlive-fonts-recommended fonts-texgyre fonts-noto-cjk poppler-utils
+      - name: Compile report and bibliography
+        working-directory: report
+        run: |
+          xelatex -interaction=nonstopmode -halt-on-error HW2_Integrated.tex
+          bibtex HW2_Integrated
+          xelatex -interaction=nonstopmode -halt-on-error HW2_Integrated.tex
+          xelatex -interaction=nonstopmode -halt-on-error HW2_Integrated.tex
+          pdfinfo HW2_Integrated.pdf | tee pdf-info.txt
+          pdftotext -layout HW2_Integrated.pdf extracted.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('extracted.txt').read_text()
+          pages=text.split('\f')
+          if not pages[-1].strip(): pages.pop()
+          refs=next((i+1 for i,p in enumerate(pages) if p.lstrip().startswith('References')), None)
+          summary=f'TOTAL_PAGES={len(pages)} REFERENCES_START_PAGE={refs} BODY_PAGES={refs-1 if refs else "unknown"}'
+          print(summary)
+          Path('page-check.txt').write_text(summary+'\n')
+          PY
+      - name: Save PDF and layout diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hw2-acl-check-${{ github.run_number }}
+          path: |
+            report/HW2_Integrated.pdf
+            report/HW2_Integrated.log
+            report/HW2_Integrated.aux
+            report/page-check.txt
+            report/extracted.txt

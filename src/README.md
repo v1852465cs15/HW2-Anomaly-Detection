@@ -1,5 +1,5 @@
 # A/B/C source integration
 
-PartC.zip is the previously published original archive containing error_analysis.py, interpretability.py and plot_ablation.py. These scripts use the original Part B/Part C directory layout and require the supplied run artifacts.
+error_analysis.py, interpretability.py and plot_ablation.py are extracted unchanged from the already published PartC.zip (retained here as the original archive). They use the original Part B/Part C directory layout and require the corresponding run artifacts.
 
-A/B integration scripts and path-adapted C scripts are prepared locally but are not published by this directory-only organization. Do not interpret this directory as a complete runnable experiment pipeline yet.
+A/B integration scripts and path-adapted C scripts are prepared locally but are not published by this directory-only organization. The complete runnable experiment pipeline requires those additional files.

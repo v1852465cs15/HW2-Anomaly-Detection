@@ -13,6 +13,13 @@
 \author{Team ID: [G01] \\
 Seven members' names and student IDs: [515559007馮昱祥、315554053邱育宏、315551146吳宥駒、\\314551160林暉庭、315561001黃少鋒、315561002莊誌強、315554001杜洺鋒] \\
 GitHub repository: \url{https://github.com/v1852465cs15/HW2-Anomaly-Detection}}
+\raggedbottom
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\dbltextfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\dblfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
 \begin{document}
 \maketitle
 \begin{abstract}
@@ -89,10 +96,10 @@ Four pairs reach $V\geq.80$: Favicon/popUpWidnow (.9394), URL shortener/double-s
 \includegraphics[width=\linewidth]{A_figures/Feature_Association.png}\end{minipage}
 \caption{Training-only feature analysis. (a) MI ranking and (b) Cramer's V heatmap with feature names and numerical annotations. Class-conditional evidence is continued in (c)--(d).}\label{fig:training}
 \end{figure*}
-\begin{figure*}[t]\raggedright
-\begin{minipage}[t]{.36\textwidth}\raggedright (c) SSL-state distribution\\
-\includegraphics[width=\linewidth]{A_figures/Feature_Abnormal_Distribution/SSLfinal_State.png}\end{minipage}\hspace{.02\textwidth}
-\begin{minipage}[t]{.36\textwidth}\raggedright (d) Anchor-code distribution\\
+\begin{figure*}[t]\centering
+\begin{minipage}[t]{.48\textwidth}\raggedright (c) SSL-state distribution\\
+\includegraphics[width=\linewidth]{A_figures/Feature_Abnormal_Distribution/SSLfinal_State.png}\end{minipage}\hfill
+\begin{minipage}[t]{.48\textwidth}\raggedright (d) Anchor-code distribution\\
 \includegraphics[width=\linewidth]{A_figures/Feature_Abnormal_Distribution/URL_of_Anchor.png}\end{minipage}
 \addtocounter{figure}{-1}
 \caption{(continued) (c)--(d): bar heights are category shares of training records; labels within bars are within-category class shares.}
@@ -109,7 +116,7 @@ s_j(x)&=-\log\widehat p_j(x_j\mid e(x)).
 \end{equation}
 Larger scores indicate reconstruction surprise; additive feature terms explain the total in nats.
 \begin{figure*}[t]\centering
-\includegraphics[width=\textwidth]{fig_pipeline.png}
+\includegraphics[width=.88\textwidth]{fig_pipeline.png}
 \caption{Our categorical AE pipeline. Threshold summary spans five seeds; we fit parameters on legitimate training records only.}\label{fig:pipeline}
 \end{figure*}
 \subsection{Threshold decision and error costs}
@@ -212,7 +219,7 @@ Table~\ref{tab:errors} selects the lowest-score conflicting FN, lowest-score sys
 \paragraph{Case notes.} (1) Training vector: five legitimate/four phishing; all $s_j\approx0$, XGBoost $P=.50$. (2) Legitimate-like codes; all $s_j\approx0$, $P=.03$. (3) SSL $-1$ contributes 3.60 nats; score is .38 below $\tau$, $P=.73$. (4) Benign deviations add up: Traffic $0$ (1.92), on\_mouseover $-1$ (1.80), Abnormal\_URL $-1$ (1.21). (5) Rare legitimate SSL $-1$ contributes 20.2 (46\%); contextual mismatch does not establish temporal drift. (6) Vector occurs twice as legitimate in training; SFH $+1$ contributes 8.6 (63\%), and all five seeds flag it. Feature terms sum to the total score.
 
 \begin{figure*}[t]\centering
-\includegraphics[width=\textwidth]{C_figures/fig_error_analysis.png}
+\includegraphics[width=.92\textwidth]{C_figures/fig_error_analysis.png}
 \caption{Seed-0 test error analysis: (a) scores relative to $\tau$ (log scale); (b) nearest legitimate-training Hamming distance by outcome; (c) negative-code shares for six features distinguishing caught from missed phishing.}\label{fig:errors}
 \end{figure*}
 
@@ -240,18 +247,20 @@ If restarting, we would first freeze a vector-group-disjoint split, audit label 
 \subsection{Deployment limitations}
 Missing URLs/HTML/timestamps, conflicting labels, cross-split overlap, and site-bootstrap dependence limit generalization. The 44.3\% prevalence differs from deployment; future distributions remain untested. AE needs clean, representative normal data and drift monitoring/recalibration/retraining. Batch .002 ms/site excludes feature extraction and end-to-end delays. Deployment requires privacy-conscious processing and human review.
 
+\par\medskip\noindent\begin{minipage}{\columnwidth}
 \section*{Contributions of Each Member}
-\begingroup\small\fontsize{10}{11.5}\selectfont
+\begingroup\raggedright\fontsize{9}{10.5}\selectfont
 \setlength{\parskip}{0pt}
 \interlinepenalty=10000
-\noindent\textbf{1 [515559007馮昱祥]:} Cleaned dataset, feature definitions (\S3, Table 1); ACL formatting and GitHub upload.\par
-\noindent\textbf{2 [314551160林暉庭]:} Train/validation/test split, preprocessing pipeline, ground-truth labels (\S3, Table 1); MI/redundancy, H1/H2 (\S4, Table 2, Figure 1).\par
-\noindent\textbf{3 [315561001黃少鋒]:} Tier-2 categorical AE (one-hot, 8-unit bottleneck, normal-only training), CE score $s(x)$ with per-feature terms, validation-F1 and FPR$\le$1\% threshold rules (\S5.1--5.2, Figure 2).\par
-\noindent\textbf{4 [315561002莊誌強]:} Tier-1 (always-normal, $-1$ count), Isolation Forest and XGBoost baselines, validation grid search, shared split, seeds 0--4, leakage rules and metrics (\S5.3, \S6).\par
-\noindent\textbf{5 [315554053邱育宏]:} Comparison/timing/significance (\S7.1, Table 3, Figures 3--4).\par
-\noindent\textbf{6 [315551146吳宥駒]:} Ablations/hypotheses (\S7.2, Table 4).\par
-\noindent\textbf{7 [315554001杜洺鋒]:} Errors/explanations/limitations (\S\S8--9, Tables 5--7, Figure 5).\par
+\noindent\textbf{\mbox{1 [515559007馮昱祥]:}} Cleaned dataset, feature definitions (\S3, Table 1); ACL formatting and GitHub upload.\par
+\noindent\textbf{\mbox{2 [314551160林暉庭]:}} Train/validation/test split, preprocessing pipeline, ground-truth labels (\S3, Table 1); MI/redundancy, H1/H2 (\S4, Table 2, Figure 1).\par
+\noindent\textbf{\mbox{3 [315561001黃少鋒]:}} Tier-2 categorical AE (one-hot, 8-unit bottleneck, normal-only training), CE score $s(x)$ with per-feature terms, validation-F1 and FPR$\le$1\% threshold rules (\S5.1--5.2, Figure 2).\par
+\noindent\textbf{\mbox{4 [315561002莊誌強]:}} Tier-1 (always-normal, $-1$ count), Isolation Forest and XGBoost baselines, validation grid search, shared split, seeds 0--4, leakage rules and metrics (\S5.3, \S6).\par
+\noindent\textbf{\mbox{5 [315554053邱育宏]:}} Comparison/timing/significance (\S7.1, Table 3, Figures 3--4).\par
+\noindent\textbf{\mbox{6 [315551146吳宥駒]:}} Ablations/hypotheses (\S7.2, Table 4).\par
+\noindent\textbf{\mbox{7 [315554001杜洺鋒]:}} Errors/explanations/limitations (\S\S8--9, Tables 5--7, Figure 5).\par
 \endgroup
-\paragraph{AI usage.} ChatGPT/Codex (GPT-6-based; exact build unrecorded): wording, integration, V audit, layout; no model reruns. Team members retain responsibility for design, interpretation, and verification.
+\paragraph{AI usage.} ChatGPT/Codex : wording, integration,  audit,layout.
+\end{minipage}\par
 \clearpage\bibliography{integrated_references}
 \end{document}
